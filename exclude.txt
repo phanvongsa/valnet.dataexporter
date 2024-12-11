@@ -1,0 +1,9 @@
+.git
+.gitignore
+bin/
+debug/
+.idea
+.vs
+obj/
+*.DotSettings.user
+exclude.txt
