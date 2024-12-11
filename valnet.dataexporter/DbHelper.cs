@@ -20,6 +20,18 @@ public class DbHelper
         return sbsql.ToString();
     }
 
+    public bool testConnection() {
+        try {
+            // Open connection to the database
+            connection.Open();
+            Console.WriteLine("Connected to Oracle Database");
+            return true;
+        } catch(Exception ex) {
+            Console.WriteLine("Error: " + ex.Message);
+            return false;
+        }
+    }
+    
     private string generateScriptDropTable(string tableName)
     {
         StringBuilder sbsql = new StringBuilder();

@@ -1,13 +1,15 @@
 ﻿using System;
-using Oracle.ManagedDataAccess.Client;
+//using Oracle.ManagedDataAccess.Client;
 using System.Text;
 using valnet.dataexporter;
 
 // //var connectionString = "User Id=VALNET;Password=VALNET;Data Source=//oracle-host-11g:1521/XE";
-var connectionString = "User Id=VALNET;Password=VALNET;Data Source=//localhost:1520/XE";
+var connectionString = "User Id=VALNET;Password=VALNET;Data Source=//localhost:1521/XE";
 string tableName = "VN_PROPERTY";
 
 DbHelper dbhelper = new DbHelper(connectionString);
+
+dbhelper.testConnection();
 Console.WriteLine(dbhelper.generateScriptTable(tableName));
 
 // Generate Create or Update Table Script
