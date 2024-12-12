@@ -1,4 +1,5 @@
-﻿using System.Text;
+﻿using System.Data;
+using System.Text;
 using Oracle.ManagedDataAccess.Client;
 
 namespace valnet.dataexporter;
@@ -11,9 +12,35 @@ public class DbHelper
     public DbHelper(string connectionString)
     {
         this.connectionString = connectionString;
-        this.connection = new OracleConnection(connectionString);
+        //this.connection = new OracleConnection(connectionString);
     }
 
+    public DataTable ExecuteQuery(string query)
+    {
+        var dataTable = new DataTable();
+
+        try
+        {
+            using (var connection = new OracleConnection(this.connectionString))
+            {
+                connection.Open();
+                using (var command = new OracleCommand(query, connection))
+                {
+                    using (var adapter = new OracleDataAdapter(command))
+                    {
+                        adapter.Fill(dataTable); // Fill the DataTable with query results
+                    }
+                }
+            }
+        }
+        catch (Exception ex)
+        {
+            Console.WriteLine($"An error occurred: {ex.Message}");
+        }
+
+        return dataTable;
+    }
+    
     public string generateScriptTable(string tableName) {
         StringBuilder sbsql = new StringBuilder(generateScriptDropTable(tableName));
         // TODO build table

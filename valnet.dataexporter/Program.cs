@@ -1,4 +1,5 @@
-﻿using Microsoft.Extensions.Configuration;
+﻿using System.Data;
+using Microsoft.Extensions.Configuration;
 using valnet.dataexporter;
 
 // This is a simple minimal console app without explicit class declaration
@@ -11,14 +12,21 @@ var builder = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{environment}.json", optional: true);
 
 var config = builder.Build();
-Console.WriteLine($"Application Name: {Directory.GetCurrentDirectory()}");
-Console.WriteLine($"Application Name: {config["env"]}");
+DbHelper dbhelper = new DbHelper(config["connectionString"]);
+DataTable qTables =dbhelper.ExecuteQuery("SELECT table_name, tablespace_name  FROM user_tables");
+foreach (DataRow row in qTables.Rows) {
+    Console.WriteLine($"Table: {row["table_name"]}, Tablespace: {row["tablespace_name"]}");
+}
+
+
+// string tableName = "VN_PROPERTY";
+// Console.WriteLine(dbhelper.generateScriptTable(tableName));
 
 // //var connectionString = "User Id=VALNET;Password=VALNET;Data Source=//oracle-host-11g:1521/XE";
 // var connectionString = "User Id=VALNET;Password=VALNET;Data Source=//localhost:1521/XE";
 // string tableName = "VN_PROPERTY";
 //
-// DbHelper dbhelper = new DbHelper(connectionString);
+
 //
 // dbhelper.testConnection();
 // Console.WriteLine(dbhelper.generateScriptTable(tableName));
