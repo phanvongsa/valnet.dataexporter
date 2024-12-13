@@ -3,7 +3,7 @@ using Microsoft.Extensions.Configuration;
 using valnet.dataexporter;
 
 // This is a simple minimal console app without explicit class declaration
-var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "local";
+var environment = Environment.GetEnvironmentVariable("ASPNETCORE_ENVIRONMENT") ?? "debug";
 
 // Build the configuration based on environment
 var builder = new ConfigurationBuilder()
@@ -12,12 +12,16 @@ var builder = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{environment}.json", optional: true);
 
 var config = builder.Build();
+Console.WriteLine($"env: {config["env"]}");
+Console.WriteLine($"connectionString: {config["connectionString"]}");
 DbHelper dbhelper = new DbHelper(config["connectionString"]);
-DataTable qTables =dbhelper.ExecuteQuery("SELECT table_name, tablespace_name  FROM user_tables");
-foreach (DataRow row in qTables.Rows) {
-    Console.WriteLine($"Table: {row["table_name"]}, Tablespace: {row["tablespace_name"]}");
-}
-
+Console.WriteLine(dbhelper.generateScriptTable("LOGS"));
+// DataTable qTables = dbhelper.getDatabaseTables();//executeQuery(CommandType.Text,"SELECT table_name, tablespace_name  FROM user_tables");
+// foreach (DataRow row in qTables.Rows) {
+//     Console.WriteLine(dbhelper.generateScriptTable(row["table_name"].ToString()));
+//     break;
+// //    Console.WriteLine($"Table: {row["table_name"]}, Tablespace: {row["tablespace_name"]}");
+// }
 
 // string tableName = "VN_PROPERTY";
 // Console.WriteLine(dbhelper.generateScriptTable(tableName));
