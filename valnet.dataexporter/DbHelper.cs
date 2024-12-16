@@ -31,8 +31,12 @@ public class DbHelper
 
     private string generateScriptCreateTable(string tableName) {
         string sql = string.Format("SELECT DBMS_METADATA.GET_DDL('TABLE', '{0}', 'VALNET') FROM dual",tableName);
-        //string create_sql =  
-        return executeScaler(sql).Replace(" ENABLE", "");
+        string create_sql = executeScaler(sql).Replace(" ENABLE", "");
+        int segmentIndex = create_sql.IndexOf("SEGMENT CREATION IMMEDIATE");
+        if (segmentIndex >= 0)
+            create_sql = create_sql.Substring(0, segmentIndex);
+        create_sql = "  EXECUTE IMMEDIATE '" + create_sql.Replace("'","''") + "';";
+        return create_sql;
     }
 
     private string executeScaler(string sql) {
@@ -88,25 +92,12 @@ public class DbHelper
     private string generateScriptDropTable(string tableName)
     {
         StringBuilder sbsql = new StringBuilder();
-        //sbsql.AppendLine("BEGIN");
-
-        sbsql.AppendLine("-- Get the count of the table");
-        sbsql.AppendFormat("SELECT COUNT(*) INTO table_count FROM user_tables WHERE table_name = '{0}';\n",tableName);
-        sbsql.AppendLine("-- Check if the table exists");
-        sbsql.AppendLine("IF table_count > 0 THEN");
+        sbsql.AppendLine("  -- Get the count of the table");
+        sbsql.AppendFormat("    SELECT COUNT(*) INTO table_count FROM user_tables WHERE table_name = '{0}';\n",tableName);
+        sbsql.AppendLine("  -- Check if the table exists");
+        sbsql.AppendLine("  IF table_count > 0 THEN");
         sbsql.AppendFormat("    EXECUTE IMMEDIATE 'DROP TABLE {0}';\n", tableName);
-        sbsql.AppendLine(" END IF;");
-        sbsql.AppendLine("EXCEPTION");
-        sbsql.AppendLine("  WHEN NO_DATA_FOUND THEN");
-        sbsql.AppendLine("-- If the table doesn't exist, do nothing");
-        sbsql.AppendLine("  NULL;");
-        
-        // sbsql.AppendFormat("  -- Drop the {0} table if it exists\n", tableName);
-        // sbsql.AppendFormat("  IF EXISTS (SELECT 1 FROM user_tables WHERE table_name = '{0}') THEN\n",tableName);
-        // sbsql.AppendFormat("      EXECUTE IMMEDIATE 'DROP TABLE {0}';\n", tableName);
-        // sbsql.AppendLine("  END IF;");
-        //sbsql.AppendLine("END;");
-        //sbsql.AppendLine(sql_delim);
+        sbsql.AppendLine("  END IF;");
         return sbsql.ToString();
     }
 }
