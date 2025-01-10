@@ -1,5 +1,6 @@
 ﻿using System.Data;
 using System.Text;
+using Microsoft.Extensions.Configuration;
 using Oracle.ManagedDataAccess.Client;
 
 namespace valnet.dataexporter;
@@ -9,14 +10,58 @@ public class DbHelper
     private string connectionString;
     //private OracleConnection connection;
     private const string sql_delim = "/";
-    public DbHelper(string connectionString) {
-        this.connectionString = connectionString;
+    private IConfigurationRoot config;
+    public DbHelper(IConfigurationRoot __config) {
+        this.config = __config;
+        this.connectionString = this.config["connectionString"];
     }
+    
     
     public DataTable getDatabaseTables(){
         string sql = "SELECT table_name, tablespace_name  FROM user_tables";
         return executeQuery(CommandType.Text, sql);
     }
+
+    public string generateScriptTableData(string tableName) {
+        StringBuilder sbsql = new StringBuilder();
+        // SQL query to fetch data
+        string sql = String.Format("SELECT * FROM {0} WHERE ROWNUM <= {1}",tableName, config["max-data-row"]);
+        DataTable q = executeQuery(CommandType.Text,sql);
+        DataColumnCollection columns = q.Columns;
+        
+        sbsql.AppendLine("--- "+tableName+ "("+q.Rows.Count+")");
+        string ins_def_into = "";
+        string ins_def_vals = "";
+        foreach (DataColumn column in columns) {
+            ins_def_into += ", "+column.ColumnName;
+            ins_def_vals += ", {"+column.ColumnName+"}";
+        }
+        
+        ins_def_into = ins_def_into.Substring(1).Trim();
+        ins_def_vals = ins_def_vals.Substring(1).Trim();
+        string ins_def_statement = $"INSERT INTO {tableName} ({ins_def_into}) VALUES ({ins_def_vals});";
+        foreach (DataRow row in q.Rows) {
+            String ins_statement = ins_def_statement;
+            foreach (DataColumn column in columns) {
+                ins_statement = ins_statement.Replace("{" + column.ColumnName + "}", generateSQLStringValue(row[column], column.DataType));
+            }
+            sbsql.AppendLine(ins_statement);
+        }
+        sbsql.AppendLine(sql_delim);
+        return sbsql.ToString();
+    }
+
+    private string generateSQLStringValue(object value, Type columnType) {
+        if(value==DBNull.Value)
+            return "NULL";
+        else if (columnType == typeof(string) || columnType == typeof(char))
+            return $"'{value.ToString().Replace("'", "''")}'";
+        else if (columnType == typeof(DateTime))
+            return $"TO_DATE('{((DateTime)value):yyyy-MM-dd HH:mm:ss}', 'YYYY-MM-DD HH24:MI:SS')";
+        else 
+            return value.ToString();
+    }
+
     public string generateScriptTable(string tableName) {
         StringBuilder sbsql = new StringBuilder();
         sbsql.AppendLine("DECLARE");

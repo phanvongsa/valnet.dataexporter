@@ -13,15 +13,32 @@ var builder = new ConfigurationBuilder()
     .AddJsonFile($"appsettings.{environment}.json", optional: true);
 
 var config = builder.Build();
-string output_file_path = string.Format(@"{0}tables.sql",config["output_folder"]);
-// Console.WriteLine($"env: {config["env"]}");
-// Console.WriteLine($"connectionString: {config["connectionString"]}");
-DbHelper dbhelper = new DbHelper(config["connectionString"]);
+DbHelper dbhelper = new DbHelper(config);
 DataTable qTables = dbhelper.getDatabaseTables();
-StringBuilder sboutput = new StringBuilder();
-sboutput.AppendFormat("-- Generated @ {0}\n", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
-foreach (DataRow row in qTables.Rows) {
-    sboutput.AppendLine(dbhelper.generateScriptTable(row["table_name"].ToString()));
+//__generateTables(qTables);
+__generateTablesData(qTables);
+Console.WriteLine("AOK");
+
+void __generateTablesData(DataTable qTables)
+{
+    string output_file_path = string.Format(@"{0}datas.sql",config["output_folder"]);
+    StringBuilder sboutput = new StringBuilder();
+    sboutput.AppendFormat("-- Generated @ {0}\n", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+    foreach (DataRow row in qTables.Rows)
+        sboutput.AppendLine(dbhelper.generateScriptTableData(row["table_name"].ToString()));
+    
+    File.WriteAllText(output_file_path, sboutput.ToString());
+    Console.WriteLine("Generated table data file: {0}",output_file_path);
 }
-File.WriteAllText(output_file_path, sboutput.ToString());
-Console.WriteLine("Generated file: {0}",output_file_path);
+
+void __generateTables(DataTable qTables)
+{
+    string output_file_path = string.Format(@"{0}tables.sql",config["output_folder"]);
+    StringBuilder sboutput = new StringBuilder();
+    sboutput.AppendFormat("-- Generated @ {0}\n", DateTime.Now.ToString("yyyy-MM-dd HH:mm:ss"));
+    foreach (DataRow row in qTables.Rows) {
+        sboutput.AppendLine(dbhelper.generateScriptTable(row["table_name"].ToString()));
+    }
+    File.WriteAllText(output_file_path, sboutput.ToString());
+    Console.WriteLine("Generated table file: {0}",output_file_path);
+}
